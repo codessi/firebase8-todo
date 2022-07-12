@@ -1,15 +1,25 @@
 import React, { useState } from 'react'
-
+import { auth, firestore } from './firebase'
+import firebase from 'firebase'
+import {useCollectionData} from "react-firebase-hooks/firestore"
 
 const Todos = () => {
   const [todo, setTodo] = useState("")
-  const todos = []
+  const todosRef = firestore.collection(`users/${auth.currentUser?.uid}/todos`)
 
-  const signOut = () => { }
+  const [todos] = useCollectionData(todosRef, { idField: "id"})
+console.log(todos)
+  const signOut = () => {auth.signOut() };
   
   const onSubmitTodo = (event) => {
     event.preventDefault();
 
+    
+    todosRef.add({
+      text: todo,
+      complete: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    })
     setTodo("")
   }
   return (
@@ -27,22 +37,21 @@ const Todos = () => {
           />
           <button type='submit'>Add</button>
         </form>
-        {todos && todos.map(todo => <Todo {...todo} />)}
+        {todos && todos.map(todo => <Todo key={todo.id}{...todo} />)}
       </main>
     </>
   )
 }
 
 const Todo = ({ id, complete, text }) => {
+  const todosRef = firestore.collection(`users/${auth.currentUser?.uid}/todos`)
 
   const onCompleteTodo = (id, complete) => { }
   
-  const onDeleteTodo = (id) => {
-    
-  }
+  const onDeleteTodo = (id) => { todosRef.doc(id).delete(); }
 
   return (
-    <div key={id} className="todo">
+    <div className="todo">
       <button
         className={`todo-item ${complete ? "complete" : ""}`}
         tabIndex="0"
